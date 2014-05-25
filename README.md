@@ -2,8 +2,8 @@ PyDownloader
 ============
 PyDownloader is a Python module to download files over HTTP. It has two modes of operations namely direct and scrap mode.
 In direct mode, simply set the download URL with setURL() and download file using start(). Note, the download task is started
-in a seprate thread hence it is necessary for the calling application to wait till download is complete.
-In scrap mode, set the URL with setURL(). This mode of operation requires a web page rather than a donwload file. 
+in a separate thread hence it is necessary for the calling application to wait till download is complete.
+In scrap mode, set the URL with setURL(). This mode of operation requires a web page rather than a download file. 
 Then set the keyword to be searched with setKeyword() and file type with setFileType(). 
 It will scrape the URL for all download links having keyword in file name and type as specified by user. 
 All the matching links will be downloaded sequentially.
