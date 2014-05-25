@@ -52,6 +52,7 @@ class PyDownloader():
         self.currentDownloadFile = 'None'
         self.currentDownloadProgress = 0
         self.currentDownloadSize = 0
+        self.linkList = []
 
         
     def getDownloadLinks(self):
