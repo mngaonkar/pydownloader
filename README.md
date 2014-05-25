@@ -11,10 +11,27 @@ All the matching links will be downloaded sequentially.
 
 Example Usage
 =============
+Simple Mode:
+
+```python
 from pydownloader import PyDownloader
 
 app = PyDownloader()
-app.setChunkSize(1024) # set download chunk size
+app.setDownloadPath('./downloads') # set download directory
+
+ret = app.setURL(URL)
+if ret['status'] == 'ok':
+  ret = app.start()
+else:
+  print(ret['response']['error'])
+```
+
+Scrape Mode:
+
+```python
+from pydownloader import PyDownloader
+
+app = PyDownloader()
 app.setKeyword('test') # set keyword to be searched on web link
 app.setFileType('mp3') # set type of files to be downloaded
 app.setDownloadPath('./downloads') # set download directory
@@ -24,3 +41,4 @@ if ret['status'] == 'ok':
   ret = app.start()
 else:
   print(ret['response']['error'])
+```
