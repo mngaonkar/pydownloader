@@ -3,6 +3,7 @@ import urllib
 import re
 import sys
 import os
+import time
 from threading import Thread, Lock, Event
 
 class Task(Thread):
@@ -19,14 +20,14 @@ class Task(Thread):
         
     def run(self):
         print('starting task...')
-        if self._obj: 
+        if self._obj:
             self._obj.run()
             
 
 class PyDownloader():
     
     CHUNK_SIZE = 1024 * 1024
-    DOWNLOAD_DIR = '.'
+    DOWNLOAD_DIR = 'download'
     
     def __init__(self):
         self.task = None
@@ -43,7 +44,7 @@ class PyDownloader():
         self.currentDownloadFile = 'None'
         self.currentDownloadProgress = 0
         self.currentDownloadSize = 0
-
+        self.currentDownloadSpeed = 0
         
     def resetStats(self):
         self.webData = ''
@@ -89,6 +90,8 @@ class PyDownloader():
         else:
             self.downloadPath = self.DOWNLOAD_DIR
         
+        if not os.path.isdir(self.downloadPath):
+            os.mkdir(self.downloadPath)
         
     def stop(self):
         if self.task:
@@ -131,31 +134,49 @@ class PyDownloader():
         except Exception as e:
             raise
         
-        
+    
     def getLinks(self):
-        """Get all download links """
         self.linkList = []
         if self.keyword != '' and self.fileType != '':
             self.linkList = re.findall(r'<a\s+href\s*=\s*\"(.*%s.*\.%s)\s*\"' % \
                 (self.keyword, self.fileType), self.webData, re.I)
         elif self.keyword == '' and self.fileType != '':
-            self.linkList = re.findall(r'<a\s+href\s*=\s*\"(.+\.%s)\s*\"' % \
+            self.linkList = re.findall(r'<a\s+href\s*=\s*\"(.+?\.%s)\s*\"' % \
                 (self.fileType), self.webData, re.I)
         elif self.keyword != '' and self.fileType == '':
             self.linkList = re.findall(r'<a\s+href\s*=\s*\"(.*%s.*\..+)\s*\"' % \
                 (self.keyword), self.webData, re.I)
         
         self.totalFileCount = len(self.linkList)
+    
+    """
+    def getLinks(self):
+        self.linkList = []
+        if self.keyword != '' and self.fileType != '':
+            self.linkList = re.findall(r'\".*(http.*?%s.*\.%s)\s*\"' % \
+                (self.keyword, self.fileType), self.webData, re.I)
+        elif self.keyword == '' and self.fileType != '':
+            self.linkList = re.findall(r'\".*(http.+?\.%s)\s*\"' % \
+                (self.fileType), self.webData, re.I)
+        elif self.keyword != '' and self.fileType == '':
+            self.linkList = re.findall(r'\".*(http.*?%s.*\..+)\s*\"' % \
+                (self.keyword), self.webData, re.I)
         
+        self.totalFileCount = len(self.linkList)
+    """
         
     def getURLInfo(self, url):
         info = {}
         
         request = urllib2.Request(url)
         link = urllib2.urlopen(request)
-        if link.info()['accept-ranges'] == 'bytes':
-            info['resumeSupport'] = True
-        else:
+
+        try:
+            if link.info()['accept-ranges'] == 'bytes':
+                info['resumeSupport'] = True
+            else:
+                info['resumeSupport'] = False
+        except:
             info['resumeSupport'] = False
             
         info['fileSize'] = link.info()['content-length']
@@ -209,7 +230,10 @@ class PyDownloader():
                     if self.task._flag_stop.is_set():
                         self.fd.close()
                         return ({'status':'success', 'response':{'error':'user stopped service'}})
+                    timeEnter = time.time()
                     chunk = self.link.read(self.chunkSize)
+                    timeExit = time.time()
+                    self.currentDownloadSpeed = int((self.chunkSize) / ((timeExit - timeEnter) * 1024.0))
                     if not chunk: 
                         break
                     else:
@@ -225,7 +249,8 @@ class PyDownloader():
                 print(' (%d/%d) downloaded\n' % (self.downloadedFileCount, self.totalFileCount))
                 
             except Exception as e:
-                return ({'status':'error', 'response':{'error':'%s' % str(e)}})
+                continue
+                #return ({'status':'error', 'response':{'error':'%s' % str(e)}})
         return ({'status':'success', 'response':{'file_count':'%d' % self.downloadedFileCount}})
         
         
